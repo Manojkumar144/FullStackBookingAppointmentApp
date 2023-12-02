@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Registration</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>BOOKING APPOINTMENT APP</h1>
+  <br>
+  <div class="container">
+    <div class="main-container">
+      <form id="userForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <br>
+        <label for="phone">Phone:</label>
+        <input type="tel" id="phone" name="phone" required>
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <button type="button" onclick="submitForm()">Submit</button>
+      </form>
+    </div>
+
+    <div id="userList"></div>
+  </div>
+
+  <script>
+    async function submitForm() {
+      const username = document.getElementById('username').value;
+      const phone = document.getElementById('phone').value;
+      const email = document.getElementById('email').value;
+
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, phone, email }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        document.getElementById('username').value='';
+        document.getElementById('phone').value='';
+        document.getElementById('email').value='';
+        showUserList(result);
+      } else {
+        alert('Failed to submit the form. Please try again.');
+      }
+    }
+
+    function showUserList(users) {
+  const userListDiv = document.getElementById('userList');
+  userListDiv.innerHTML = '';
+
+  const ul = document.createElement('ul');
+
+  users.forEach((user) => {
+    const li = document.createElement('li');
+    li.textContent = `${user.username} - ${user.email}`;
+
+    const editButton = document.createElement('button');
+    editButton.textContent = 'Edit';
+    editButton.style.marginRight = '2px';
+    editButton.style.marginLeft = '2px';
+    editButton.style.marginTop = '2px';
+    editButton.addEventListener('click', () => editUser(user.id));
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.style.marginLeft = '2px';
+    deleteButton.style.marginTop = '2px';
+    deleteButton.addEventListener('click', () => deleteUser(user.id));
+
+    li.appendChild(editButton);
+    li.appendChild(deleteButton);
+
+    ul.appendChild(li);
+  });
+
+  userListDiv.appendChild(ul);
+}
+
+
+    async function fetchUsers() {
+      const response = await fetch('/api/users');
+      const users = await response.json();
+      showUserList(users);
+    }
+
+    async function editUser(userId) {
+  const newUsername = prompt('Enter the new username:');
+  const newPhone = prompt('Enter the new phone number:');
+  const newEmail = prompt('Enter the new email:');
+
+  const response = await fetch(`/api/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username: newUsername, phone: newPhone, email: newEmail }),
+  });
+
+  if (response.ok) {
+    // Reload the user list after editing
+    fetchUsers();
+    console.log('User updated successfully');
+  } else {
+    console.error('Failed to update user');
+  }
+}
+
+async function deleteUser(userId) {
+  const confirmDelete = confirm('Are you sure you want to delete this user?');
+
+  if (confirmDelete) {
+    const response = await fetch(`/api/users/${userId}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      // Reload the user list after deletion
+      fetchUsers();
+      console.log('User deleted successfully');
+    } else {
+      console.error('Failed to delete user');
+    }
+  }
+}
+
+    // Fetch initial user list on page load
+    fetchUsers();
+  </script>
+</body>
+</html>
